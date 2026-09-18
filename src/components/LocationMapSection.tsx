@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   MapPin, 
   PhoneCall, 
@@ -7,10 +7,25 @@ import {
   MessageSquare, 
   ExternalLink,
   ShieldCheck,
-  Building2
+  Building2,
+  Maximize2
 } from 'lucide-react';
+import { 
+  APIProvider, 
+  Map, 
+  AdvancedMarker, 
+  Pin, 
+  InfoWindow 
+} from '@vis.gl/react-google-maps';
+
+const TAIF_OKAZ_COORDS = { lat: 21.2678, lng: 40.4158 };
+const EXACT_ADDRESS_STRING = 'شارع عكاظ، 26523، الشرقية، الطائف 26523، المملكة العربية السعودية';
+const GOOGLE_MAPS_SEARCH_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('شارع عكاظ، 26523، الشرقية، الطائف 26523، السعودية')}`;
 
 export const LocationMapSection: React.FC = () => {
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+  const [showInfoWindow, setShowInfoWindow] = useState(true);
+
   return (
     <section className="py-14 lg:py-20 bg-slate-50 border-t border-slate-200" id="contact">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -114,63 +129,112 @@ export const LocationMapSection: React.FC = () => {
             </div>
           </div>
 
-          {/* Interactive Simulated Map / Directions Card (7 cols) */}
+            {/* Interactive Google Map Card (7 cols) */}
           <div className="lg:col-span-7 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs flex flex-col justify-between overflow-hidden relative">
-            <div className="text-right mb-4">
-              <h3 className="font-bold text-slate-900 text-base mb-1">
-                خريطة التغطية وانطلاق الفني من شارع عكاظ بالطائف
-              </h3>
-              <p className="text-xs text-slate-500">
-                انطلاق سريع من حي الشرقية عبر الطرق الدائرية والمحاور الرئيسية للوصول لكافة الأحياء
-              </p>
-            </div>
-
-            {/* Visual Schematic Map Container */}
-            <div className="relative h-64 sm:h-80 bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 flex items-center justify-center group">
-              {/* Stylized Map Background */}
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:2rem_2rem] opacity-70"></div>
-              
-              {/* Radial Roads visualization */}
-              <div className="absolute w-72 h-72 border border-blue-200 rounded-full animate-ping opacity-20 pointer-events-none"></div>
-              <div className="absolute w-96 h-96 border border-blue-300 rounded-full opacity-30 pointer-events-none"></div>
-
-              {/* Pin at Okaz Street */}
-              <div className="relative z-10 flex flex-col items-center animate-bounce">
-                <div className="bg-red-600 text-white p-3 rounded-full shadow-lg border-2 border-white">
-                  <MapPin className="w-6 h-6" />
-                </div>
-                <div className="mt-2 bg-slate-900/90 text-white text-xs font-extrabold px-3 py-1.5 rounded-lg shadow-md border border-slate-700 text-center">
-                  <div>شارع عكاظ، الشرقية</div>
-                  <div className="text-[10px] text-blue-300">مقر فني تكييف الطائف</div>
-                </div>
-              </div>
-
-              {/* Neighboring Markers */}
-              <div className="absolute top-6 right-8 bg-white/90 border border-slate-300 px-2 py-1 rounded text-[11px] font-bold text-slate-700 shadow-xs">
-                حي شهار (خدمة في نفس اليوم)
-              </div>
-              <div className="absolute bottom-6 left-8 bg-white/90 border border-slate-300 px-2 py-1 rounded text-[11px] font-bold text-slate-700 shadow-xs">
-                حي الحوية (تغطية شاملة)
-              </div>
-              <div className="absolute bottom-6 right-10 bg-white/90 border border-slate-300 px-2 py-1 rounded text-[11px] font-bold text-slate-700 shadow-xs">
-                حي الوسام (نجيك لحد بابك)
-              </div>
-              <div className="absolute top-6 left-10 bg-white/90 border border-slate-300 px-2 py-1 rounded text-[11px] font-bold text-slate-700 shadow-xs">
-                حي السداد (خدمة 24/7)
-              </div>
-
-              {/* Action Overlay */}
+            <div className="text-right mb-4 flex items-center justify-between">
               <a
-                href="https://maps.google.com/?q=Okaz+Street+Taif+Saudi+Arabia"
+                href={GOOGLE_MAPS_SEARCH_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="absolute inset-0 bg-slate-950/20 hover:bg-slate-950/40 backdrop-blur-[1px] transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 z-20"
+                className="text-xs text-blue-600 hover:text-blue-800 font-bold inline-flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100"
               >
-                <span className="bg-blue-600 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-lg">
-                  <ExternalLink className="w-4 h-4" />
-                  <span>فتح في تطبيق خرائط Google</span>
-                </span>
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>فتح في تطبيق خرائط Google</span>
               </a>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base mb-0.5">
+                  موقعنا بدقة: شارع عكاظ، الشرقية، الطائف
+                </h3>
+                <p className="text-xs text-slate-500">
+                  دبوس الموقع الدقيق لمركز الفني مع توجيه مباشر للملاحة
+                </p>
+              </div>
+            </div>
+
+            {/* Interactive Map Container */}
+            <div className="relative h-72 sm:h-96 w-full rounded-2xl overflow-hidden border border-slate-200 shadow-inner">
+              {apiKey ? (
+                <APIProvider apiKey={apiKey} solutionChannel="GMP_visgl_reactgooglemaps_v1_default">
+                  <Map
+                    defaultCenter={TAIF_OKAZ_COORDS}
+                    defaultZoom={15}
+                    mapId="taif_ac_map"
+                    gestureHandling="greedy"
+                    disableDefaultUI={false}
+                    className="w-full h-full"
+                    internalUsageAttributionIds={["gmp_mcp_codeassist_v1_aistudio"]}
+                  >
+                    <AdvancedMarker 
+                      position={TAIF_OKAZ_COORDS}
+                      onClick={() => setShowInfoWindow(!showInfoWindow)}
+                      title="شارع عكاظ، 26523، الشرقية، الطائف 26523، السعودية"
+                    >
+                      <Pin 
+                        background="#dc2626" 
+                        glyphColor="#ffffff" 
+                        borderColor="#991b1b" 
+                      />
+                    </AdvancedMarker>
+
+                    {showInfoWindow && (
+                      <InfoWindow
+                        position={TAIF_OKAZ_COORDS}
+                        onCloseClick={() => setShowInfoWindow(false)}
+                      >
+                        <div className="p-2 text-right dir-rtl max-w-[240px]">
+                          <div className="flex items-center gap-1 text-red-600 font-extrabold text-xs mb-1">
+                            <MapPin className="w-3.5 h-3.5 shrink-0" />
+                            <span>مقر الفني - شارع عكاظ</span>
+                          </div>
+                          <div className="text-[11px] text-slate-700 font-semibold mb-1">
+                            شارع عكاظ، 26523، الشرقية، الطائف 26523، السعودية
+                          </div>
+                          <div className="text-[10px] text-emerald-700 font-medium mb-2 bg-emerald-50 p-1 rounded">
+                            خدمة متنقلة 24/7 لجميع أحياء الطائف
+                          </div>
+                          <div className="flex gap-1.5">
+                            <a
+                              href="tel:0568663745"
+                              className="flex-1 text-center bg-blue-600 text-white font-bold text-[11px] py-1 px-2 rounded-md hover:bg-blue-700"
+                            >
+                              اتصال
+                            </a>
+                            <a
+                              href={GOOGLE_MAPS_SEARCH_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 text-center bg-emerald-600 text-white font-bold text-[11px] py-1 px-2 rounded-md hover:bg-emerald-700"
+                            >
+                              توجيه
+                            </a>
+                          </div>
+                        </div>
+                      </InfoWindow>
+                    )}
+                  </Map>
+                </APIProvider>
+              ) : (
+                <div className="w-full h-full bg-slate-100 flex flex-col items-center justify-center p-6 text-center">
+                  <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-3">
+                    <MapPin className="w-6 h-6" />
+                  </div>
+                  <h4 className="font-bold text-slate-900 text-sm mb-1">
+                    شارع عكاظ، 26523، الشرقية، الطائف 26523، السعودية
+                  </h4>
+                  <p className="text-xs text-slate-500 max-w-sm mb-4">
+                    نغطي جميع أحياء الطائف: الحوية، شهار، السداد، الوسام، الوشحاء، الفيصلية وغيرها.
+                  </p>
+                  <a
+                    href={GOOGLE_MAPS_SEARCH_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-blue-600 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm hover:bg-blue-700 transition"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>فتح الموقع في خرائط Google مباشرة</span>
+                  </a>
+                </div>
+              )}
             </div>
 
             <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
@@ -179,7 +243,7 @@ export const LocationMapSection: React.FC = () => {
                 <span>إمكانية الدفع عند المعاينة وإتمام الصيانة</span>
               </span>
               <a
-                href="https://maps.google.com/?q=Okaz+Street+Taif+Saudi+Arabia"
+                href={GOOGLE_MAPS_SEARCH_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:underline font-bold inline-flex items-center gap-1"

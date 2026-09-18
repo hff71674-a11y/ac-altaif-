@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { TAIF_AREAS_DATA } from '../data/taifAreasData';
 import { SERVICES_DATA } from '../data/servicesData';
+import { db } from '../lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { 
   Calendar, 
   PhoneCall, 
@@ -47,9 +49,26 @@ export const BookingFormSection: React.FC<BookingFormSectionProps> = ({
 
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.phone) return;
+
+    try {
+      // Save booking request to Firestore
+      await addDoc(collection(db, 'bookings'), {
+        fullName: formData.name.trim() || 'عميل في الطائف',
+        phone: formData.phone.trim(),
+        serviceType: formData.serviceNeeded,
+        neighborhood: formData.neighborhood,
+        acType: formData.acType,
+        urgency: formData.urgency,
+        notes: formData.notes || '',
+        createdAt: serverTimestamp(),
+        status: 'pending'
+      });
+    } catch (error) {
+      console.error('Error recording booking in Firestore:', error);
+    }
 
     // Build structured WhatsApp message
     const message = `السلام عليكم ورحمة الله،
